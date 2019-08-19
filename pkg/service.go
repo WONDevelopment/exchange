@@ -2,9 +2,10 @@ package pkg
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/xiangxian/exchange"
+	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -14,14 +15,14 @@ import (
 
 type Service interface {
 	Time() (time.Time, error)
-	Depth() (exchange.DepthResult, error)
-	Trades() (exchange.Trades, error)
-	historicalTrades()(exchange.Trades, error)
-	Account()(exchange.Account, error)
-	TickerPrice()(exchange.TickerPrice, error)
-	CreateOrder()(exchange.Order, error)
-	GetOrders()([]*exchange.Order, error)
-	GetOrder()(exchange.Order, error)
+	Depth() (DepthResult, error)
+	Trades() (Trades, error)
+	HistoricalTrades()(Trades, error)
+	Account()(Account, error)
+	TickerPrice()(TickerPrice, error)
+	CreateOrder()(Order, error)
+	GetOrders()([]*Order, error)
+	GetOrder()(Order, error)
 	CancelOrder()error
 }
 
@@ -50,32 +51,58 @@ func NewWonService(url, apiKey string, signer Signer, logger log.Logger, ctx con
 }
 
 func(ws *wonService) Time()(time.Time, error){
+	params := make(map[string]string)
+	res, err := ws.request("GET", "api/v1/time", params, false, false)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	textRes, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return time.Time{}, errors.New(fmt.Sprintf("unable to read response from Time:%s", err.Error()))
+	}
+	defer res.Body.Close()
+
+	type data struct {
+		Time int64 `json:time`
+	}
+	var rawTime struct {
+		Date data `json:"data"`
+	}
+	if err := json.Unmarshal(textRes, &rawTime); err != nil {
+		return time.Time{}, errors.New(fmt.Sprintf("timeResponse unmarshal failed:%s", err.Error()))
+	}
+	t, err := timeFromUnixMillTimestamp(rawTime.Date.Time)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return t, nil
 	return time.Now(), nil
 }
 
-func(ws *wonService) Depth()(exchange.DepthResult, error){
-	return exchange.DepthResult{}, nil
+func(ws *wonService) Depth()(DepthResult, error){
+	return DepthResult{}, nil
 }
-func(ws *wonService) Trades()(exchange.Trades, error){
-	return  exchange.Trades{}, nil
+func(ws *wonService) Trades()(Trades, error){
+	return  Trades{}, nil
 }
-func(ws *wonService) historicalTrades()(exchange.Trades, error){
-	return  exchange.Trades{}, nil
+func(ws *wonService) HistoricalTrades()(Trades, error){
+	return  Trades{}, nil
 }
-func(ws *wonService) Account()(exchange.Account, error){
-	return exchange.Account{}, nil
+func(ws *wonService) Account()(Account, error){
+	return Account{}, nil
 }
-func(ws *wonService) TickerPrice()(exchange.TickerPrice, error){
-	return exchange.TickerPrice{}, nil
+func(ws *wonService) TickerPrice()(TickerPrice, error){
+	return TickerPrice{}, nil
 }
-func(ws *wonService) CreateOrder()(exchange.Order, error){
-	return exchange.Order{}, nil
+func(ws *wonService) CreateOrder()(Order, error){
+	return Order{}, nil
 }
-func(ws *wonService) GetOrders()([]*exchange.Order, error){
-	return []*exchange.Order{}, nil
+func(ws *wonService) GetOrders()([]*Order, error){
+	return []*Order{}, nil
 }
-func(ws *wonService) GetOrder()(exchange.Order, error){
-	return exchange.Order{}, nil
+func(ws *wonService) GetOrder()(Order, error){
+	return Order{}, nil
 }
 func(ws *wonService) CancelOrder()error{
 	return nil
@@ -115,3 +142,18 @@ func (ws *wonService) request(method string, endpoint string, params map[string]
 	}
 	return resp, nil
 }
+
+func (ws *wonService) handleError(textRes []byte) error {
+	err := &WonError{}
+	level.Info(ws.Logger).Log("errorResponse", textRes)
+
+	if err := json.Unmarshal(textRes, err); err != nil {
+		return errors.New(fmt.Sprintf("error unmarshal failed:%s", err.Error()))
+	}
+	return err
+}
+
+func timeFromUnixMillTimestamp(ts int64) (time.Time, error) {
+	return time.Unix(0, int64(ts)*int64(time.Millisecond)), nil
+}
+
