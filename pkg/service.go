@@ -22,7 +22,7 @@ type Service interface {
 	Account(AccountRequest) (*Account, error)
 	TickerPrice(TickerPriceRequest) (*TickerPrice, error)
 	CreateOrder(CreateOrderRequest) (*Order, error)
-	GetOrders() ([]*Order, error)
+	GetOrders(OrdersRequest) ([]*Order, error)
 	GetOrder(OrderRequest) (*Order, error)
 	CancelOrder(CancelOrderRequest) error
 }
@@ -333,8 +333,52 @@ func (ws *wonService) CreateOrder(cor CreateOrderRequest) (*Order, error) {
 
 	return &rawResult.Data, nil
 }
-func (ws *wonService) GetOrders() ([]*Order, error) {
-	return []*Order{}, nil
+func (ws *wonService) GetOrders(osr OrdersRequest) ([]*Order, error) {
+	params := make(map[string]string)
+	params["market"] = osr.Market
+	params["order_id"] = strconv.FormatInt(osr.OrderId, 10)
+	params["start_at_stamp"] = strconv.FormatInt(osr.StartAtStamp, 10)
+	params["end_at_stamp"] = strconv.FormatInt(osr.EndAtStamp, 10)
+	params["timestamp"] = strconv.FormatInt(osr.Timestamp, 10)
+
+	if len(osr.State) > 0 {
+		params["state"] = osr.State
+	}
+	if len(osr.Side) > 0 {
+		params["side"] = osr.Side
+	}
+	if osr.Limit > 0{
+		params["limit"] = strconv.Itoa(osr.Limit)
+	}
+	if osr.RecvWindow > 0 {
+		params["recv_window"] = strconv.Itoa(osr.RecvWindow)
+	}
+	res, err := ws.request("GET", "api/v1/orders", params, true, true)
+	if err != nil {
+		return nil, err
+	}
+
+	textRes, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("unable to read response from GetOrder:%s", err.Error()))
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != 200 {
+		return nil, ws.handleError(textRes)
+	}
+
+	var rawResult struct {
+		Data []Order `json:"data"`
+	}
+	if err := json.Unmarshal(textRes, &rawResult); err != nil {
+		return nil, errors.New(fmt.Sprintf("GetOrder Response unmarshal failed:%s", err.Error()))
+	}
+	var orders []*Order
+	for _,v :=range rawResult.Data{
+		orders = append(orders, &v)
+	}
+	return orders, nil
 }
 func (ws *wonService) GetOrder(or OrderRequest) (*Order, error) {
 	params := make(map[string]string)

@@ -10,7 +10,7 @@ import (
 )
 
 func initWon() exchange.Won{
-	signer:= &pkg.HmacSigner{}
+	signer:= &pkg.HmacSigner{Key:[]byte("your secret key")}
 	server := pkg.NewWonService(
 		wonHost,
 		"",
@@ -90,6 +90,22 @@ func TestCreateOrder(t *testing.T){
 func TestCancelOrder(t *testing.T){
 	won := initWon()
 	err:=won.CancelOrder(pkg.CancelOrderRequest{Id:1501,Timestamp:int64(time.Now().Unix() * 100), RecvWindow:5000})
+
+	assert.Equal(t, nil ,err)
+}
+
+func TestGetOrders(t *testing.T){
+	won := initWon()
+	orders,err:=won.GetOrders(pkg.OrdersRequest{
+		Market:       "wonbtc",
+		State:        "wait",
+		Side:         "sell",
+		RecvWindow:   5000,
+		Timestamp:    11110,
+	})
+	for _,v:= range orders{
+		t.Logf(fmt.Sprintf("GetOrders:%+v", *v))
+	}
 
 	assert.Equal(t, nil ,err)
 }

@@ -11,9 +11,9 @@ type Won interface {
 	Trades(pkg.TradeRequest) ([]*pkg.Trade, error)
 	HistoricalTrades(pkg.TradeRequest)([]*pkg.HistoryTrade, error)
 	Account(pkg.AccountRequest)(*pkg.Account, error)
-	TickerPrice(request pkg.TickerPriceRequest)(*pkg.TickerPrice, error)
+	TickerPrice(pkg.TickerPriceRequest)(*pkg.TickerPrice, error)
 	CreateOrder(pkg.CreateOrderRequest)(*pkg.Order, error)
-	GetOrders()([]*pkg.Order, error)
+	GetOrders(pkg.OrdersRequest)([]*pkg.Order, error)
 	GetOrder(pkg.OrderRequest)(*pkg.Order, error)
 	CancelOrder(pkg.CancelOrderRequest)error
 }
@@ -51,8 +51,8 @@ func (w *won)TickerPrice(tpr pkg.TickerPriceRequest)(*pkg.TickerPrice, error){
 func (w *won)CreateOrder(cor pkg.CreateOrderRequest)(*pkg.Order, error){
 	return w.Service.CreateOrder(cor)
 }
-func (w *won)GetOrders()([]*pkg.Order, error){
-	return w.Service.GetOrders()
+func (w *won)GetOrders(osr pkg.OrdersRequest)([]*pkg.Order, error){
+	return w.Service.GetOrders(osr)
 }
 func (w *won)GetOrder(or pkg.OrderRequest)(*pkg.Order, error){
 	return w.Service.GetOrder(or)

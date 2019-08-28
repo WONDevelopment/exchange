@@ -42,6 +42,18 @@ type CancelOrderRequest struct {
 	Timestamp  int64
 }
 
+type OrdersRequest struct{
+	Market string
+	OrderId int64
+	State string
+	Side string
+	StartAtStamp int64
+	EndAtStamp int64
+	Limit int
+	RecvWindow int
+	Timestamp  int64
+}
+
 type DepthResult struct {
 	Time int
 	Bids []struct {
