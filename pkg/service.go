@@ -21,10 +21,10 @@ type Service interface {
 	HistoricalTrades(TradeRequest) ([]*HistoryTrade, error)
 	Account(AccountRequest) (*Account, error)
 	TickerPrice(TickerPriceRequest) (*TickerPrice, error)
-	CreateOrder() (Order, error)
+	CreateOrder(CreateOrderRequest) (*Order, error)
 	GetOrders() ([]*Order, error)
-	GetOrder() (Order, error)
-	CancelOrder() error
+	GetOrder(OrderRequest) (*Order, error)
+	CancelOrder(CancelOrderRequest) error
 }
 
 type wonService struct {
@@ -134,7 +134,7 @@ func (ws *wonService) Trades(tr TradeRequest) ([]*Trade, error) {
 	}
 
 	if tr.FromId > 0 {
-		params["from_id"] = strconv.Itoa(tr.FromId)
+		params["from_id"] = strconv.FormatInt(tr.FromId, 10)
 	}
 
 	res, err := ws.request("GET", "api/v1/trades", params, false, false)
@@ -177,7 +177,7 @@ func (ws *wonService) HistoricalTrades(tr TradeRequest) ([]*HistoryTrade, error)
 	}
 
 	if tr.FromId > 0 {
-		params["from_id"] = strconv.Itoa(tr.FromId)
+		params["from_id"] = strconv.FormatInt(tr.FromId, 10)
 	}
 
 	res, err := ws.request("GET", "api/v1/history/trades", params, true, true)
@@ -215,7 +215,7 @@ func (ws *wonService) HistoricalTrades(tr TradeRequest) ([]*HistoryTrade, error)
 }
 func (ws *wonService) Account(ar AccountRequest) (*Account, error) {
 	params := make(map[string]string)
-	params["timestamp"] = strconv.Itoa(ar.Timestamp)
+	params["timestamp"] = strconv.FormatInt(ar.Timestamp, 10)
 	if ar.RecvWindow > 0 {
 		params["recv_window"] = strconv.Itoa(ar.RecvWindow)
 	}
@@ -298,16 +298,105 @@ func (ws *wonService) TickerPrice(tqr TickerPriceRequest) (*TickerPrice, error) 
 	return &rawDepth.Data, nil
 }
 
-func (ws *wonService) CreateOrder() (Order, error) {
-	return Order{}, nil
+func (ws *wonService) CreateOrder(cor CreateOrderRequest) (*Order, error) {
+	params := make(map[string]string)
+	params["market"] = cor.Market
+	params["side"] = cor.Side
+	params["volume"] = cor.Volume
+	params["price"] = cor.Price
+	params["ord_type"] = cor.OrdType
+	params["timestamp"] = strconv.FormatInt(cor.Timestamp, 10)
+	if cor.RecvWindow > 0 {
+		params["recv_window"] = strconv.Itoa(cor.RecvWindow)
+	}
+	res, err := ws.request("POST", "api/v1/order/create", params, true, true)
+	if err != nil {
+		return nil, err
+	}
+
+	textRes, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("unable to read response from CreateOrder:%s", err.Error()))
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode >=300 {
+		return nil, ws.handleError(textRes)
+	}
+
+	var rawResult struct {
+		Data Order `json:"data"`
+	}
+	if err := json.Unmarshal(textRes, &rawResult); err != nil {
+		return nil, errors.New(fmt.Sprintf("CreateOrder Response unmarshal failed:%s", err.Error()))
+	}
+
+	return &rawResult.Data, nil
 }
 func (ws *wonService) GetOrders() ([]*Order, error) {
 	return []*Order{}, nil
 }
-func (ws *wonService) GetOrder() (Order, error) {
-	return Order{}, nil
+func (ws *wonService) GetOrder(or OrderRequest) (*Order, error) {
+	params := make(map[string]string)
+	params["id"] = strconv.FormatInt(or.Id, 10)
+	params["timestamp"] = strconv.FormatInt(or.Timestamp, 10)
+	if or.RecvWindow > 0 {
+		params["recv_window"] = strconv.Itoa(or.RecvWindow)
+	}
+	res, err := ws.request("GET", "api/v1/order", params, true, true)
+	if err != nil {
+		return nil, err
+	}
+
+	textRes, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("unable to read response from GetOrder:%s", err.Error()))
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != 200 {
+		return nil, ws.handleError(textRes)
+	}
+
+	var rawResult struct {
+		Data Order `json:"data"`
+	}
+	if err := json.Unmarshal(textRes, &rawResult); err != nil {
+		return nil, errors.New(fmt.Sprintf("GetOrder Response unmarshal failed:%s", err.Error()))
+	}
+
+	return &rawResult.Data, nil
 }
-func (ws *wonService) CancelOrder() error {
+
+func (ws *wonService) CancelOrder(cor CancelOrderRequest) error {
+	params := make(map[string]string)
+	params["id"] = strconv.FormatInt(cor.Id, 10)
+	params["timestamp"] = strconv.FormatInt(cor.Timestamp, 10)
+	if cor.RecvWindow > 0 {
+		params["recv_window"] = strconv.Itoa(cor.RecvWindow)
+	}
+	res, err := ws.request("POST", "api/v1/order/cancel", params, true, true)
+	if err != nil {
+		return err
+	}
+
+	textRes, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return errors.New(fmt.Sprintf("unable to read response from CancelOrder:%s", err.Error()))
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode >= 300 {
+		return ws.handleError(textRes)
+	}
+
+	var rawResult struct {
+		Data string `json:"data"`
+	}
+	if err := json.Unmarshal(textRes, &rawResult); err != nil || rawResult.Data != "success" {
+		return errors.New(fmt.Sprintf("CancelOrder Response unmarshal failed:%s", err.Error()))
+	}
+
 	return nil
 }
 

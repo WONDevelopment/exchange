@@ -12,10 +12,10 @@ type Won interface {
 	HistoricalTrades(pkg.TradeRequest)([]*pkg.HistoryTrade, error)
 	Account(pkg.AccountRequest)(*pkg.Account, error)
 	TickerPrice(request pkg.TickerPriceRequest)(*pkg.TickerPrice, error)
-	CreateOrder()(pkg.Order, error)
+	CreateOrder(pkg.CreateOrderRequest)(*pkg.Order, error)
 	GetOrders()([]*pkg.Order, error)
-	GetOrder()(pkg.Order, error)
-	CancelOrder()error
+	GetOrder(pkg.OrderRequest)(*pkg.Order, error)
+	CancelOrder(pkg.CancelOrderRequest)error
 }
 
 
@@ -48,15 +48,15 @@ func (w *won)Account(ar pkg.AccountRequest)(*pkg.Account, error){
 func (w *won)TickerPrice(tpr pkg.TickerPriceRequest)(*pkg.TickerPrice, error){
 	return w.Service.TickerPrice(tpr)
 }
-func (w *won)CreateOrder()(pkg.Order, error){
-	return w.Service.CreateOrder()
+func (w *won)CreateOrder(cor pkg.CreateOrderRequest)(*pkg.Order, error){
+	return w.Service.CreateOrder(cor)
 }
 func (w *won)GetOrders()([]*pkg.Order, error){
 	return w.Service.GetOrders()
 }
-func (w *won)GetOrder()(pkg.Order, error){
-	return w.Service.GetOrder()
+func (w *won)GetOrder(or pkg.OrderRequest)(*pkg.Order, error){
+	return w.Service.GetOrder(or)
 }
-func (w *won)CancelOrder()error{
-	return w.Service.CancelOrder()
+func (w *won)CancelOrder(cor pkg.CancelOrderRequest)error{
+	return w.Service.CancelOrder(cor)
 }
