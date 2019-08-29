@@ -20,12 +20,12 @@ type AccountRequest struct {
 	Timestamp  int64
 }
 
-type CreateOrderRequest struct{
-	Market string
-	Side string
-	Volume string
-	Price string
-	OrdType string
+type CreateOrderRequest struct {
+	Market     string
+	Side       string
+	Volume     string
+	Price      string
+	OrdType    string
 	RecvWindow int
 	Timestamp  int64
 }
@@ -42,16 +42,16 @@ type CancelOrderRequest struct {
 	Timestamp  int64
 }
 
-type OrdersRequest struct{
-	Market string
-	OrderId int64
-	State string
-	Side string
+type OrdersRequest struct {
+	Market       string
+	OrderId      int64
+	State        string
+	Side         string
 	StartAtStamp int64
-	EndAtStamp int64
-	Limit int
-	RecvWindow int
-	Timestamp  int64
+	EndAtStamp   int64
+	Limit        int
+	RecvWindow   int
+	Timestamp    int64
 }
 
 type DepthResult struct {
@@ -66,19 +66,20 @@ type DepthResult struct {
 	}
 }
 
-type Trade struct {
-	Id       int
+type RecentTrade struct {
+	Id       int64
 	Price    string
 	Quantity string
-	CreateAt int
+	CreateAt int64
 }
 
-type HistoryTrade struct {
-	Id       int
+type MyTrade struct {
+	Id       int64
+	OrderId  int64
 	Price    string
 	Quantity string
 	Side     string
-	CreateAt int
+	CreateAt int64
 }
 
 type CurrencyAccount struct {

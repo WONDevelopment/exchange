@@ -17,8 +17,8 @@ import (
 type Service interface {
 	Time() (time.Time, error)
 	Depth(DepthRequest) (*DepthResult, error)
-	Trades(TradeRequest) ([]*Trade, error)
-	HistoricalTrades(TradeRequest) ([]*HistoryTrade, error)
+	RecentTrades(TradeRequest) ([]*RecentTrade, error)
+	MyTrades(TradeRequest) ([]*MyTrade, error)
 	Account(AccountRequest) (*Account, error)
 	TickerPrice(TickerPriceRequest) (*TickerPrice, error)
 	CreateOrder(CreateOrderRequest) (*Order, error)
@@ -126,7 +126,7 @@ func (ws *wonService) Depth(dq DepthRequest) (*DepthResult, error) {
 
 	return &resultDepth, err
 }
-func (ws *wonService) Trades(tr TradeRequest) ([]*Trade, error) {
+func (ws *wonService) RecentTrades(tr TradeRequest) ([]*RecentTrade, error) {
 	params := make(map[string]string)
 	params["market"] = tr.Market
 	if tr.Limit > 0 {
@@ -137,7 +137,7 @@ func (ws *wonService) Trades(tr TradeRequest) ([]*Trade, error) {
 		params["from_id"] = strconv.FormatInt(tr.FromId, 10)
 	}
 
-	res, err := ws.request("GET", "api/v1/trades", params, false, false)
+	res, err := ws.request("GET", "api/v1/trades/recent", params, true, false)
 	if err != nil {
 		return nil, err
 	}
@@ -149,10 +149,10 @@ func (ws *wonService) Trades(tr TradeRequest) ([]*Trade, error) {
 	defer res.Body.Close()
 
 	type result struct {
-		Id       int    `json:"id"`
+		Id       int64  `json:"id"`
 		Price    string `json:"price"`
 		Quantity string `json:"qty"`
-		CreateAt int    `json:"time"`
+		CreateAt int64  `json:"time"`
 	}
 
 	var rawDepth struct {
@@ -162,14 +162,14 @@ func (ws *wonService) Trades(tr TradeRequest) ([]*Trade, error) {
 	if err := json.Unmarshal(textRes, &rawDepth); err != nil {
 		return nil, errors.New(fmt.Sprintf("Trades Response unmarshal Trades:%s", err.Error()))
 	}
-	var trades []*Trade
+	var trades []*RecentTrade
 	for _, v := range rawDepth.Data {
-		trades = append(trades, &Trade{Id: v.Id, Price: v.Price, Quantity: v.Quantity, CreateAt: v.CreateAt})
+		trades = append(trades, &RecentTrade{Id: v.Id, Price: v.Price, Quantity: v.Quantity, CreateAt: v.CreateAt})
 	}
 
 	return trades, nil
 }
-func (ws *wonService) HistoricalTrades(tr TradeRequest) ([]*HistoryTrade, error) {
+func (ws *wonService) MyTrades(tr TradeRequest) ([]*MyTrade, error) {
 	params := make(map[string]string)
 	params["market"] = tr.Market
 	if tr.Limit > 0 {
@@ -180,7 +180,7 @@ func (ws *wonService) HistoricalTrades(tr TradeRequest) ([]*HistoryTrade, error)
 		params["from_id"] = strconv.FormatInt(tr.FromId, 10)
 	}
 
-	res, err := ws.request("GET", "api/v1/history/trades", params, true, true)
+	res, err := ws.request("GET", "api/v1/trades/my", params, true, true)
 	if err != nil {
 		return nil, err
 	}
@@ -192,11 +192,12 @@ func (ws *wonService) HistoricalTrades(tr TradeRequest) ([]*HistoryTrade, error)
 	defer res.Body.Close()
 
 	type result struct {
-		Id       int    `json:"id"`
+		Id       int64  `json:"id"`
+		OrderId  int64  `json:"order_id"`
 		Price    string `json:"price"`
 		Side     string `json:"side"`
 		Quantity string `json:"qty"`
-		CreateAt int    `json:"time"`
+		CreateAt int64  `json:"time"`
 	}
 
 	var rawDepth struct {
@@ -206,9 +207,9 @@ func (ws *wonService) HistoricalTrades(tr TradeRequest) ([]*HistoryTrade, error)
 	if err := json.Unmarshal(textRes, &rawDepth); err != nil {
 		return nil, errors.New(fmt.Sprintf("HistoricalTrades Response unmarshal HistoricalTrades:%s", err.Error()))
 	}
-	var trades []*HistoryTrade
+	var trades []*MyTrade
 	for _, v := range rawDepth.Data {
-		trades = append(trades, &HistoryTrade{Id: v.Id, Price: v.Price, Side: v.Side, Quantity: v.Quantity, CreateAt: v.CreateAt})
+		trades = append(trades, &MyTrade{Id: v.Id, OrderId: v.OrderId, Price: v.Price, Side: v.Side, Quantity: v.Quantity, CreateAt: v.CreateAt})
 	}
 
 	return trades, nil
@@ -240,7 +241,7 @@ func (ws *wonService) Account(ar AccountRequest) (*Account, error) {
 		Balance      string `json:"balance"`
 		locked       string `json:"locked"`
 		UsdPrice     string `json:"usd_price"`
-		Precision    int `json:"precision"`
+		Precision    int    `json:"precision"`
 		Limits       struct {
 			MinimalTradeFee string `json:"minimal_trade_fee"`
 		} `json:"limits"`
@@ -320,7 +321,7 @@ func (ws *wonService) CreateOrder(cor CreateOrderRequest) (*Order, error) {
 	}
 	defer res.Body.Close()
 
-	if res.StatusCode >=300 {
+	if res.StatusCode >= 300 {
 		return nil, ws.handleError(textRes)
 	}
 
@@ -347,7 +348,7 @@ func (ws *wonService) GetOrders(osr OrdersRequest) ([]*Order, error) {
 	if len(osr.Side) > 0 {
 		params["side"] = osr.Side
 	}
-	if osr.Limit > 0{
+	if osr.Limit > 0 {
 		params["limit"] = strconv.Itoa(osr.Limit)
 	}
 	if osr.RecvWindow > 0 {
@@ -375,7 +376,7 @@ func (ws *wonService) GetOrders(osr OrdersRequest) ([]*Order, error) {
 		return nil, errors.New(fmt.Sprintf("GetOrder Response unmarshal failed:%s", err.Error()))
 	}
 	var orders []*Order
-	for _,v :=range rawResult.Data{
+	for _, v := range rawResult.Data {
 		orders = append(orders, &v)
 	}
 	return orders, nil

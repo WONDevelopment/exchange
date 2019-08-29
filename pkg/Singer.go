@@ -1,6 +1,5 @@
 package pkg
 
-
 import (
 	"crypto/hmac"
 	"crypto/sha256"
@@ -14,7 +13,6 @@ type Signer interface {
 type HmacSigner struct {
 	Key []byte
 }
-
 
 func (h *HmacSigner) Sign(payload []byte) string {
 	m := hmac.New(sha256.New, h.Key)

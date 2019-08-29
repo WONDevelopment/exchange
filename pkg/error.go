@@ -2,8 +2,8 @@ package pkg
 
 import "fmt"
 
-type WonError struct{
-	Code string `json:error`
+type WonError struct {
+	Code    string `json:error`
 	Message string `json:error_description`
 }
 
