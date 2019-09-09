@@ -465,7 +465,7 @@ func (ws *wonService) request(method string, endpoint string, params map[string]
 		q.Add(key, val)
 	}
 	if apiKey {
-		req.Header.Add("X-MBX-APIKEY", ws.APIKey)
+		req.Header.Add("X-WON-APIKEY", ws.APIKey)
 	}
 	if sign {
 		level.Debug(ws.Logger).Log("queryString", q.Encode())
