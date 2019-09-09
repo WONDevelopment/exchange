@@ -5,6 +5,7 @@ import (
 	"github.com/bmizerany/assert"
 	"github.com/xiangxian/exchange"
 	"github.com/xiangxian/exchange/pkg"
+	"net/http"
 	"testing"
 	"time"
 )
@@ -105,4 +106,25 @@ func TestGetOrders(t *testing.T) {
 	}
 
 	assert.Equal(t, nil, err)
+}
+
+
+func TestSignature(t *testing.T){
+	signer := &pkg.HmacSigner{Key: []byte("3a8c1faf-c5c4-4d4d-bb4b-bd42b9e86772")}
+
+	req, _ := http.NewRequest("POST", "api", nil)
+	q := req.URL.Query()
+	params:= map[string]string{
+		"a":"111",
+		"b":"111",
+	}
+	for key, val := range params {
+		q.Add(key, val)
+	}
+	keys:=q.Encode()
+	t.Log(keys)
+	assert.Equal(t,
+		"5877cccfd2dc1328e34c29238d1b54ebaf0d1038ee98d6bd3588f4569fcd42dd",
+
+		signer.Sign([]byte(keys)))
 }
