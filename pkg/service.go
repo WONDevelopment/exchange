@@ -376,8 +376,8 @@ func (ws *wonService) GetOrders(osr OrdersRequest) ([]*Order, error) {
 		return nil, errors.New(fmt.Sprintf("GetOrder Response unmarshal failed:%s", err.Error()))
 	}
 	var orders []*Order
-	for _, v := range rawResult.Data {
-		orders = append(orders, &v)
+	for i, _ := range rawResult.Data {
+		orders = append(orders, &rawResult.Data[i])
 	}
 	return orders, nil
 }

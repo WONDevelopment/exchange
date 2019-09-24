@@ -59,14 +59,14 @@ func TestTickerPrice(t *testing.T) {
 
 func TestAccount(t *testing.T) {
 	won := initWon()
-	r, err := won.Account(pkg.AccountRequest{Timestamp: int64(time.Now().Unix() * 100), RecvWindow: 5000})
+	r, err := won.Account(pkg.AccountRequest{Timestamp: int64(time.Now().Unix() * 1000), RecvWindow: 5000})
 	t.Logf(fmt.Sprintf("AccountResult:%v", r))
 	assert.Equal(t, nil, err)
 }
 
 func TestGetOrder(t *testing.T) {
 	won := initWon()
-	r, err := won.GetOrder(pkg.OrderRequest{Id: 1495, Timestamp: int64(time.Now().Unix() * 100), RecvWindow: 5000})
+	r, err := won.GetOrder(pkg.OrderRequest{Id: 1495, Timestamp: int64(time.Now().Unix() * 1000), RecvWindow: 5000})
 	t.Logf(fmt.Sprintf("GetOrder:%+v", r))
 	assert.Equal(t, nil, err)
 }
@@ -74,12 +74,12 @@ func TestGetOrder(t *testing.T) {
 func TestCreateOrder(t *testing.T) {
 	won := initWon()
 	r, err := won.CreateOrder(pkg.CreateOrderRequest{
-		Market:     "wonbtc",
-		Side:       "buy",
-		Price:      "0.00011",
-		Volume:     "1",
+		Market:     "topwon",
+		Side:       "sell",
+		Price:      "5.0001",
+		Volume:     "10",
 		OrdType:    "limit",
-		Timestamp:  int64(time.Now().Unix() * 100),
+		Timestamp:  int64(time.Now().Unix() * 1000),
 		RecvWindow: 5000})
 	t.Logf(fmt.Sprintf("CreateOrder:%+v", r))
 	assert.Equal(t, nil, err)
@@ -99,7 +99,7 @@ func TestGetOrders(t *testing.T) {
 		State:      "wait",
 		Side:       "sell",
 		RecvWindow: 5000,
-		Timestamp:  11110,
+		Timestamp:  time.Now().Unix() * 1000,
 	})
 	for _, v := range orders {
 		t.Logf(fmt.Sprintf("GetOrders:%+v", *v))
