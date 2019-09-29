@@ -473,6 +473,7 @@ func (ws *wonService) request(method string, endpoint string, params map[string]
 		level.Debug(ws.Logger).Log("signature", ws.Signer.Sign([]byte(q.Encode())))
 	}
 	req.URL.RawQuery = q.Encode()
+	req.Close = true
 
 	resp, err := client.Do(req)
 	if err != nil {

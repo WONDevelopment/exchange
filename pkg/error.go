@@ -3,8 +3,8 @@ package pkg
 import "fmt"
 
 type WonError struct {
-	Code    string `json:error`
-	Message string `json:error_description`
+	Code    string `json:"error"`
+	Message string `json:"error_description"`
 }
 
 func (e WonError) Error() string {
