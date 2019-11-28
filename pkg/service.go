@@ -239,7 +239,7 @@ func (ws *wonService) Account(ar AccountRequest) (*Account, error) {
 		Currency     string `json:"currency"`
 		TotalBalance string `json:"total_balance"`
 		Balance      string `json:"balance"`
-		locked       string `json:"locked"`
+		Locked       string `json:"locked"`
 		UsdPrice     string `json:"usd_price"`
 		Precision    int    `json:"precision"`
 		Limits       struct {
@@ -264,7 +264,7 @@ func (ws *wonService) Account(ar AccountRequest) (*Account, error) {
 			Currency:     v.Currency,
 			TotalBalance: v.TotalBalance,
 			Balance:      v.Balance,
-			locked:       v.locked,
+			Locked:       v.Locked,
 			UsdPrice:     v.UsdPrice,
 			Precision:    v.Precision,
 			Limits:       struct{ MinimalTradeFee string }{MinimalTradeFee: v.Limits.MinimalTradeFee},

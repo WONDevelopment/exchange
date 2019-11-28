@@ -86,7 +86,7 @@ type CurrencyAccount struct {
 	Currency     string
 	TotalBalance string
 	Balance      string
-	locked       string
+	Locked       string
 	UsdPrice     string
 	Precision    int
 	Limits       struct {
